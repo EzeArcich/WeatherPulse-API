@@ -80,8 +80,10 @@ List saved locations.
 Create/save a location (geocoding resolves lat/lon automatically).
 
 Request body:
+
 ```json
 { "name": "Buenos Aires" }
+
 DELETE /api/locations/{id}
 Remove a saved location.
 
