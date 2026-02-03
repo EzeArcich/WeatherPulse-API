@@ -153,5 +153,3 @@ CREDITS / ATTRIBUTION
 
 Weather data and geocoding are powered by Open-Meteo:
 https://open-meteo.com/
-
-Th
