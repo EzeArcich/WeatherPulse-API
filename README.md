@@ -108,7 +108,7 @@ Optional: Redis (recommended for queue/cache in production)
 
 Install
 bash
-Copiar código
+
 composer install
 cp .env.example .env
 php artisan key:generate
@@ -116,40 +116,40 @@ Configure DB
 Update .env with your DB settings, then run:
 
 bash
-Copiar código
+
 php artisan migrate
 Run the app
 bash
-Copiar código
+
 php artisan serve
 Queue & Scheduler
 Run queue worker
 Set your queue driver in .env (e.g. database or redis):
 
 env
-Copiar código
+
 QUEUE_CONNECTION=database
 If using database, create the queue tables:
 
 bash
-Copiar código
+
 php artisan queue:table
 php artisan migrate
 Start the worker:
 
 bash
-Copiar código
+
 php artisan queue:work
 Run scheduler (hourly sync)
 If you configured an hourly schedule (e.g. SyncAllLocationsJob), you can run:
 
 bash
-Copiar código
+
 php artisan schedule:work
 In a real server, configure cron:
 
 bash
-Copiar código
+
 * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
 Postman Collection
 Import the collection file:
@@ -172,7 +172,7 @@ https://schema.getpostman.com/json/collection/v2.1.0/collection.json
 
 <details> <summary>Postman Collection JSON</summary>
 json
-Copiar código
+
 {
   "info": {
     "name": "WeatherPulse API",
@@ -286,7 +286,7 @@ If your locations.lat and locations.lon are decimal, Eloquent returns them as st
 Add casts on the model:
 
 php
-Copiar código
+
 protected $casts = [
   'lat' => 'float',
   'lon' => 'float',
@@ -306,5 +306,5 @@ License
 MIT (or choose your preferred license)
 
 makefile
-Copiar código
+
 ::contentReference[oaicite:0]{index=0}
