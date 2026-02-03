@@ -29,8 +29,8 @@ This repo is a portfolio-grade example of:
 ## Tech Stack
 - **Laravel 12**
 - HTTP client via `Illuminate\Support\Facades\Http`
-- Queue jobs (`database`, `redis`, etc.)
-- Cache (`file`, `database`, `redis`, etc.)
+- Queue jobs (`database`, `redis`, )
+- Cache (`file`, `database`, `redis`, )
 - External provider: **Open-Meteo** (Geocoding + Forecast)
 
 ---
@@ -111,7 +111,7 @@ Copiar código
 php artisan serve
 Queue & Scheduler
 Run queue worker
-Choose your queue driver (database, redis, etc.) in .env:
+Choose your queue driver (database, redis) in .env:
 
 env
 Copiar código
