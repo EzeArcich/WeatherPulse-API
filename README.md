@@ -1,59 +1,282 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# WeatherPulse API (Laravel + Open-Meteo)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A clean, production-style Laravel API that integrates with the **Open-Meteo** weather platform (no API key required) to:
+- fetch **current weather by city name** (on-demand, cached)
+- manage **saved locations**
+- run a **scheduled sync** (queue jobs) to persist **weather snapshots** for history/analytics
+- expose endpoints ready for a frontend/dashboard
 
-## About Laravel
+## Why this project exists
+This repo is a portfolio-grade example of:
+- external API integration (HTTP client + mapping)
+- clean layering (Application / Infrastructure / Domain)
+- caching to reduce external calls
+- background jobs + scheduling
+- idempotent persistence (no duplicated snapshots)
+- easy local setup with Postman collection
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
+- **City search → weather now**: `GET /api/weather/search?city=...`
+- **Locations CRUD**: create/list/delete saved locations
+- **Async syncing**: `POST /api/sync` dispatches a job that syncs all saved locations
+- **Scheduler-ready**: hourly job can run via cron or `schedule:work`
+- **Snapshot history**: retrieve latest and historical weather snapshots
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Tech Stack
+- **Laravel 12**
+- HTTP client via `Illuminate\Support\Facades\Http`
+- Queue jobs (`database`, `redis`, etc.)
+- Cache (`file`, `database`, `redis`, etc.)
+- External provider: **Open-Meteo** (Geocoding + Forecast)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Architecture (high level)
+**Infrastructure**
+- `OpenMeteoGeocodingClient` / `OpenMeteoForecastClient` → HTTP calls
+- `OpenMeteoMapper` → normalizes provider payloads into DTOs
+- `OpenMeteo*Provider` → implements contracts used by the app
 
-## Laravel Sponsors
+**Application**
+- `WeatherSearchService` → orchestrates geocode → forecast → map → cache
+- `WeatherSyncService` → syncs saved locations & persists snapshots
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+**Domain**
+- DTOs (`CityLocationDTO`, `WeatherReadingDTO`, `WeatherReportDTO`)
+- Contracts (`GeocodingProvider`, `ForecastProvider`)
 
-### Premium Partners
+This keeps your app stable even if you swap providers later.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
 
-## Contributing
+## API Endpoints
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1) Weather search (no DB required)
+**GET** `/api/weather/search?city=Buenos Aires`
 
-## Code of Conduct
+Returns normalized current weather for a city name (cached).
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 2) Locations
+**GET** `/api/locations`  
+List saved locations.
 
-## Security Vulnerabilities
+**POST** `/api/locations`  
+Body:
+```json
+{ "name": "Buenos Aires" }
+DELETE /api/locations/{id}
+Remove a saved location.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+3) Snapshots (persisted)
+GET /api/locations/{id}/latest
+Last persisted snapshot.
 
-## License
+GET /api/locations/{id}/snapshots?from=2026-01-01&to=2026-02-01
+Snapshot history in a date range.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+4) Sync (queue)
+POST /api/sync
+Dispatches a job to sync all saved locations (and store snapshots).
+
+Setup (Local)
+Requirements
+PHP 8.2+
+
+Composer
+
+A database (MySQL/Postgres/SQLite)
+
+Optional: Redis (recommended for queue/cache in production)
+
+Install
+bash
+Copiar código
+composer install
+cp .env.example .env
+php artisan key:generate
+Configure DB
+Update .env with your DB settings, then run:
+
+bash
+Copiar código
+php artisan migrate
+Run the app
+bash
+Copiar código
+php artisan serve
+Queue & Scheduler
+Run queue worker
+Choose your queue driver (database, redis, etc.) in .env:
+
+env
+Copiar código
+QUEUE_CONNECTION=database
+If using database, also run:
+
+bash
+Copiar código
+php artisan queue:table
+php artisan migrate
+Start the worker:
+
+bash
+Copiar código
+php artisan queue:work
+Run scheduler (hourly sync)
+If you configured an hourly schedule (e.g. SyncAllLocationsJob), you can run:
+
+bash
+Copiar código
+php artisan schedule:work
+In a real server, you’d configure cron:
+
+bash
+Copiar código
+* * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
+Postman Collection
+This repo includes a Postman collection to test the API quickly.
+
+Import
+Open Postman → Import
+
+Choose Raw text
+
+Paste the JSON from postman/WeatherPulse.postman_collection.json (or from the section below)
+
+Set the collection variable:
+
+base_url = http://localhost:8000
+
+Collection JSON (copy/paste)
+Create a file at: postman/WeatherPulse.postman_collection.json with the content below.
+
+json
+Copiar código
+{
+  "info": {
+    "name": "WeatherPulse API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "weatherpulse-collection-001"
+  },
+  "item": [
+    {
+      "name": "Search Weather by City",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/weather/search?city=Buenos Aires",
+          "host": ["{{base_url}}"],
+          "path": ["api", "weather", "search"],
+          "query": [
+            { "key": "city", "value": "Buenos Aires" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Locations - List",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/locations",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations"]
+        }
+      }
+    },
+    {
+      "name": "Locations - Store",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Buenos Aires\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/locations",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations"]
+        }
+      }
+    },
+    {
+      "name": "Locations - Delete",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/api/locations/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations", "1"]
+        }
+      }
+    },
+    {
+      "name": "Location Weather - Latest Snapshot",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/locations/1/latest",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations", "1", "latest"]
+        }
+      }
+    },
+    {
+      "name": "Location Weather - Snapshot History",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/locations/1/snapshots?from=2026-01-01&to=2026-02-01",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations", "1", "snapshots"],
+          "query": [
+            { "key": "from", "value": "2026-01-01" },
+            { "key": "to", "value": "2026-02-01" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Sync All Locations (Dispatch Job)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/sync",
+          "host": ["{{base_url}}"],
+          "path": ["api", "sync"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" }
+  ]
+}
+Notes / Gotchas
+If your locations.lat and locations.lon are decimal, Eloquent returns them as strings by default.
+Add casts on the model:
+
+php
+Copiar código
+protected $casts = [
+  'lat' => 'float',
+  'lon' => 'float',
+];
+Roadmap (optional)
+Add daily/hourly aggregated metrics endpoints
+
+Add alerts (e.g., “notify me if temp < X”)
+
+Add OpenAPI/Swagger docs
+
