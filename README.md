@@ -66,7 +66,8 @@ List saved locations.
 
 **POST** `/api/locations`  
 Body:
-```json
+json
+
 { "name": "Buenos Aires" }
 DELETE /api/locations/{id}
 Remove a saved location.
@@ -155,7 +156,7 @@ Collection JSON (copy/paste)
 Create a file at: postman/WeatherPulse.postman_collection.json with the content below.
 
 json
-Copiar código
+
 {
   "info": {
     "name": "WeatherPulse API",
