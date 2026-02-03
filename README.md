@@ -1,22 +1,24 @@
 # WeatherPulse API (Laravel + Open-Meteo)
 
 A clean, production-style Laravel API that integrates with **[Open-Meteo](https://open-meteo.com/)** (no API key required) to:
-- fetch **current weather by city name** (on-demand, cached)
-- manage **saved locations**
-- run a **scheduled sync** (queue jobs) to persist **weather snapshots** for history/analytics
-- expose endpoints ready for a frontend/dashboard
+
+- Fetch **current weather by city name** (on-demand, cached)
+- Manage **saved locations**
+- Run a **scheduled sync** (queue jobs) to persist **weather snapshots** for history/analytics
+- Expose endpoints ready for a frontend/dashboard
 
 ---
 
 ## Why this project exists
 
 This repo is a portfolio-grade example of:
-- external API integration (HTTP client + mapping)
-- clean layering (Application / Infrastructure / Domain)
-- caching to reduce external calls
-- background jobs + scheduling
-- idempotent persistence (no duplicated snapshots)
-- easy local setup with a Postman collection
+
+- External API integration (HTTP client + mapping)
+- Clean layering (Application / Infrastructure / Domain)
+- Caching to reduce external calls
+- Background jobs + scheduling
+- Idempotent persistence (no duplicated snapshots)
+- Easy local setup with a Postman collection
 
 ---
 
@@ -32,7 +34,7 @@ This repo is a portfolio-grade example of:
 
 ## Tech Stack
 
-- **Laravel 12**
+- Laravel 12
 - HTTP client via `Illuminate\Support\Facades\Http`
 - Queue jobs (`database`, `redis`)
 - Cache (`file`, `database`, `redis`)
@@ -42,16 +44,16 @@ This repo is a portfolio-grade example of:
 
 ## Architecture (high level)
 
-**Infrastructure**
+### Infrastructure
 - `OpenMeteoGeocodingClient` / `OpenMeteoForecastClient` → HTTP calls
 - `OpenMeteoMapper` → normalizes provider payloads into DTOs
 - `OpenMeteo*Provider` → implements contracts used by the app
 
-**Application**
+### Application
 - `WeatherSearchService` → orchestrates geocode → forecast → map → cache
 - `WeatherSyncService` → syncs saved locations & persists snapshots
 
-**Domain**
+### Domain
 - DTOs (`CityLocationDTO`, `WeatherReadingDTO`, `WeatherReportDTO`)
 - Contracts (`GeocodingProvider`, `ForecastProvider`)
 
@@ -62,6 +64,7 @@ This keeps the app stable even if you swap providers later.
 ## API Endpoints
 
 ### 1) Weather search (no DB required)
+
 **GET** `/api/weather/search?city=Buenos Aires`
 
 Returns normalized current weather for a city name (cached).
@@ -79,7 +82,6 @@ Create/save a location (geocoding resolves lat/lon automatically).
 Request body:
 ```json
 { "name": "Buenos Aires" }
-
 DELETE /api/locations/{id}
 Remove a saved location.
 
@@ -150,30 +152,135 @@ bash
 Copiar código
 * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1
 Postman Collection
-This repo includes a Postman collection to test the API quickly.
+Import the collection file:
 
-Import
+postman/WeatherPulse.postman_collection.json
+
+Import steps
 Open Postman → Import
 
 Choose Raw text
 
-Paste the JSON from postman/WeatherPulse.postman_collection.json
+Paste the JSON below (or load the file from the repo)
 
 Set the collection variable:
 
 base_url = http://localhost:8000
 
-Collection file
-Create this file:
-
-postman/WeatherPulse.postman_collection.json
-
-(Use the JSON from the collection you already generated.)
-
-Postman collection format schema:
-
+Postman collection schema:
 https://schema.getpostman.com/json/collection/v2.1.0/collection.json
 
+<details> <summary>Postman Collection JSON</summary>
+json
+Copiar código
+{
+  "info": {
+    "name": "WeatherPulse API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "weatherpulse-collection-001"
+  },
+  "item": [
+    {
+      "name": "Search Weather by City",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/weather/search?city=Buenos Aires",
+          "host": ["{{base_url}}"],
+          "path": ["api", "weather", "search"],
+          "query": [
+            { "key": "city", "value": "Buenos Aires" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Locations - List",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/locations",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations"]
+        }
+      }
+    },
+    {
+      "name": "Locations - Store",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Buenos Aires\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/locations",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations"]
+        }
+      }
+    },
+    {
+      "name": "Locations - Delete",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{base_url}}/api/locations/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations", "1"]
+        }
+      }
+    },
+    {
+      "name": "Location Weather - Latest Snapshot",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/locations/1/latest",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations", "1", "latest"]
+        }
+      }
+    },
+    {
+      "name": "Location Weather - Snapshot History",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{base_url}}/api/locations/1/snapshots?from=2026-01-01&to=2026-02-01",
+          "host": ["{{base_url}}"],
+          "path": ["api", "locations", "1", "snapshots"],
+          "query": [
+            { "key": "from", "value": "2026-01-01" },
+            { "key": "to", "value": "2026-02-01" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Sync All Locations (Dispatch Job)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/sync",
+          "host": ["{{base_url}}"],
+          "path": ["api", "sync"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" }
+  ]
+}
+</details>
 Notes / Gotchas
 If your locations.lat and locations.lon are decimal, Eloquent returns them as strings by default.
 Add casts on the model:
@@ -194,3 +301,10 @@ Add daily/hourly aggregated metrics endpoints
 Add alerts (e.g., “notify me if temp < X”)
 
 Add OpenAPI/Swagger docs
+
+License
+MIT (or choose your preferred license)
+
+makefile
+Copiar código
+::contentReference[oaicite:0]{index=0}
