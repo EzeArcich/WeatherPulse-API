@@ -85,6 +85,8 @@ Request body:
 { "name": "Buenos Aires" }
 
 DELETE /api/locations/{id}
+...
+
 Remove a saved location.
 
 3) Snapshots (persisted)
