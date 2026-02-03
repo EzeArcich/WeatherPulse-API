@@ -13,16 +13,15 @@ return new class extends Migration {
             $table->id();
 
             $table->string('name');                  // "Buenos Aires"
-            $table->string('country_code', 2);       // "AR"
+            $table->string('country');       // "Argentina"
             $table->decimal('lat', 10, 7);
             $table->decimal('lon', 10, 7);
 
             $table->string('timezone')->nullable();  // "America/Argentina/Buenos_Aires"
-            $table->string('slug')->unique();        // "buenos-aires-ar" (útil para URLs y búsqueda)
 
             $table->timestamps();
 
-            $table->index(['country_code', 'name']);
+            $table->index(['country', 'name']);
         });
     }
 

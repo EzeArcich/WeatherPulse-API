@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class Location extends Model
 {
     protected $fillable = [
-        'name','country_code','lat','lon','timezone','slug'
+        'name','country','lat','lon','timezone','slug'
+    ];
+
+    protected $casts = [
+        'lat' => 'float',
+        'lon' => 'float',
     ];
 }
