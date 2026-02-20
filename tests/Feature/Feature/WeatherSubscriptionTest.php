@@ -15,11 +15,10 @@ class WeatherSubscriptionTest extends TestCase
     {
         $loc = Location::create([
             'name' => 'Buenos Aires',
-            'country_code' => 'AR',
+            'country' => 'Argentina',
             'lat' => -34.6036844,
             'lon' => -58.3815591,
             'timezone' => 'America/Argentina/Buenos_Aires',
-            'slug' => 'buenos-aires-ar',
         ]);
 
         WeatherSubscription::create([

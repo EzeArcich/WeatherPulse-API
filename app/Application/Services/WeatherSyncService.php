@@ -18,13 +18,13 @@ final class WeatherSyncService
 
         WeatherSnapshot::query()->updateOrCreate(
             [
+                'provider' => 'open-meteo',
                 'location_id' => $location->id,
                 'observed_at' => $dto->observedAt->format('Y-m-d H:i:s'),
             ],
             [
-                'temperature_c' => $dto->temperatureC,
+                'temp_c' => $dto->temperatureC,
                 'wind_kph' => $dto->windKph,
-                'precip_mm' => $dto->precipMm,
                 'humidity' => $dto->humidity,
                 'raw' => $dto->raw,
             ]

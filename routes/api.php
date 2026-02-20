@@ -8,9 +8,11 @@ use App\Http\Controllers\Api\SyncController;
 
 Route::get('/weather/search', [WeatherSearchController::class, 'search']);
 
-Route::apiResource('cities', CityController::class)->only(['index','store','destroy']);
+Route::apiResource('cities', CityController::class)
+    ->parameters(['cities' => 'location'])
+    ->only(['index','store','destroy']);
 
-Route::get('/cities/{city}/latest', [CityWeatherController::class, 'latest']);
-Route::get('/cities/{city}/snapshots', [CityWeatherController::class, 'snapshots']);
+Route::get('/cities/{location}/latest', [CityWeatherController::class, 'latest']);
+Route::get('/cities/{location}/snapshots', [CityWeatherController::class, 'snapshots']);
 
 Route::post('/sync', [SyncController::class, 'sync']);
