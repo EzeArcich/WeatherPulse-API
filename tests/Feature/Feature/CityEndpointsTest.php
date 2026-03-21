@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Weather\Contracts\GeocodingProvider;
 use App\Models\Location;
 use App\Models\WeatherSnapshot;
+use App\Domain\Weather\DTO\CityLocationDTO;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -56,5 +58,44 @@ class CityEndpointsTest extends TestCase
 
         $response->assertNoContent();
         $this->assertDatabaseMissing('locations', ['id' => $location->id]);
+    }
+
+    public function test_store_creates_the_city_from_geocoding_data(): void
+    {
+        $this->app->bind(GeocodingProvider::class, fn () => new class implements GeocodingProvider {
+            public function resolveCity(string $cityName): ?CityLocationDTO
+            {
+                return new CityLocationDTO(
+                    name: 'Buenos Aires',
+                    country: 'Argentina',
+                    latitude: -34.6036844,
+                    longitude: -58.3815591,
+                    timezone: 'America/Argentina/Buenos_Aires',
+                );
+            }
+        });
+
+        $response = $this->postJson('/api/cities', [
+            'name' => 'Buenos Aires',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.name', 'Buenos Aires')
+            ->assertJsonPath('data.country', 'Argentina');
+
+        $this->assertDatabaseHas('locations', [
+            'name' => 'Buenos Aires',
+            'country' => 'Argentina',
+        ]);
+    }
+
+    public function test_store_validates_the_city_name(): void
+    {
+        $response = $this->postJson('/api/cities', [
+            'name' => '',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['name']);
     }
 }
