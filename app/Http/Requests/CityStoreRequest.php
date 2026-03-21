@@ -6,6 +6,11 @@ use Illuminate\Foundation\Http\FormRequest;
 
 final class CityStoreRequest extends FormRequest
 {
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     public function rules(): array
     {
         return [
@@ -18,4 +23,3 @@ final class CityStoreRequest extends FormRequest
         return trim((string) $this->input('name'));
     }
 }
-
