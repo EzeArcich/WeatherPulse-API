@@ -3,6 +3,13 @@ WeatherPulse API (Laravel + Open-Meteo)
 A clean, production-style Laravel API that integrates with Open-Meteo (no API key required):
 https://open-meteo.com/
 
+![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)
+![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-PHPUnit-0A9EDC?logo=php&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Provider](https://img.shields.io/badge/Weather%20Provider-Open--Meteo-2EA44F)
+![Status](https://img.shields.io/badge/Status-Portfolio%20Project-6f42c1)
+
 It allows you to:
 - Fetch current weather by city name (on-demand, cached)
 - Manage saved cities
