@@ -30,13 +30,13 @@ final class WeatherSearchService
     {
         $location = $this->resolveCity($cityName);
 
-        $cacheKey = 'weather:search:' . md5(mb_strtolower($location->name.'|'.$location->latitude.'|'.$location->longitude));
+        $cacheKey = 'weather:search:v2:' . md5(mb_strtolower($location->name.'|'.$location->latitude.'|'.$location->longitude));
         $ttlSeconds = 15 * 60;
 
         return Cache::remember($cacheKey, $ttlSeconds, function () use ($location) {
-            $current = $this->forecast->current($location->latitude, $location->longitude, $location->timezone);
+            $forecast = $this->forecast->report($location->latitude, $location->longitude, $location->timezone);
 
-            return new WeatherReportDTO($location, $current, stale: false);
+            return new WeatherReportDTO($location, $forecast->current, $forecast->hourly, stale: false);
         });
     }
 }

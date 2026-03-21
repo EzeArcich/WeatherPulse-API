@@ -20,6 +20,7 @@ final class OpenMeteoForecastClient
                 'latitude' => $lat,
                 'longitude' => $lon,
                 'current' => 'temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m',
+                'hourly' => 'temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,precipitation_probability',
                 'timezone' => $timezone ?? 'auto',
             ]);
 

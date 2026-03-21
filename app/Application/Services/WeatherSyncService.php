@@ -25,6 +25,7 @@ final class WeatherSyncService
             [
                 'temp_c' => $dto->temperatureC,
                 'wind_kph' => $dto->windKph,
+                'precipitation_probability' => $dto->precipitationProbability,
                 'humidity' => $dto->humidity,
                 'raw' => $dto->raw,
             ]

@@ -26,6 +26,7 @@ class CityEndpointsTest extends TestCase
         WeatherSnapshot::create([
             'location_id' => $location->id,
             'temp_c' => 28.5,
+            'precipitation_probability' => 20,
             'provider' => 'open-meteo',
             'observed_at' => now()->subHour()->seconds(0),
         ]);
@@ -33,6 +34,7 @@ class CityEndpointsTest extends TestCase
         $latest = WeatherSnapshot::create([
             'location_id' => $location->id,
             'temp_c' => 30.2,
+            'precipitation_probability' => 35,
             'provider' => 'open-meteo',
             'observed_at' => now()->seconds(0),
         ]);
@@ -41,7 +43,42 @@ class CityEndpointsTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('city.id', $location->id)
-            ->assertJsonPath('data.id', $latest->id);
+            ->assertJsonPath('data.id', $latest->id)
+            ->assertJsonPath('data.precipitation_probability', 35);
+    }
+
+    public function test_snapshots_returns_precipitation_probability_in_history(): void
+    {
+        $location = Location::create([
+            'name' => 'Buenos Aires',
+            'country' => 'Argentina',
+            'lat' => -34.6036844,
+            'lon' => -58.3815591,
+            'timezone' => 'America/Argentina/Buenos_Aires',
+        ]);
+
+        WeatherSnapshot::create([
+            'location_id' => $location->id,
+            'temp_c' => 28.5,
+            'precipitation_probability' => 10,
+            'provider' => 'open-meteo',
+            'observed_at' => '2026-01-10 10:00:00',
+        ]);
+
+        WeatherSnapshot::create([
+            'location_id' => $location->id,
+            'temp_c' => 30.2,
+            'precipitation_probability' => 45,
+            'provider' => 'open-meteo',
+            'observed_at' => '2026-01-10 11:00:00',
+        ]);
+
+        $response = $this->getJson("/api/cities/{$location->id}/snapshots?from=2026-01-10&to=2026-01-10");
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.precipitation_probability', 10)
+            ->assertJsonPath('data.1.precipitation_probability', 45);
     }
 
     public function test_destroy_removes_the_city(): void
